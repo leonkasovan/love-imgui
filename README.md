@@ -36,12 +36,11 @@ cmake --build build --config Release --target install
 
 Build the project using CMake in MSYS2 Windows:
 ```
+pacman -S mingw-w64-ucrt-x86_64-luajit
 rm -rf build
 cmake -Bbuild -S. -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --target install
 ```
-(Windows users may want to change `$PWD` with `%CD%` when running from cmd)
-
 Then copy the generated dynamic module next to your love executable or into the LÖVE application data folder (for instance "C:/Users/<user>/AppData/Roaming/LOVE" on Windows or ~/.local/shared/love on Linux).
 
 Pre-built binaries for Windows and Mas OSX are provided in the [releases](https://github.com/leonkasovan/love-imgui/releases) page.
