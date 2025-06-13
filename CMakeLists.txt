@@ -1,24 +1,27 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
-IF(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_BINARY_DIR})
-	# Protip: run cmake like this: cmake -Bbuild -H. or see the readme
-	message(FATAL_ERROR "Prevented in-tree build.")
+cmake_minimum_required(VERSION 3.0)
+
+if(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_BINARY_DIR})
+	message(FATAL_ERROR "Prevented in-tree build. Use: cmake -Bbuild -S.")
 endif()
 
-PROJECT(love-imgui)
+project(love-imgui)
 
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-FIND_PACKAGE(LuaJIT)
-IF(NOT LUAJIT_FOUND)
-	FIND_PACKAGE(Lua 5.1 EXACT REQUIRED)
-	SET(DESIRED_LUA_INCLUDE_DIR ${LUA_INCLUDE_DIR})
-	SET(DESIRED_LUA_LIBRARY ${LUA_LIBRARIES})
-ELSE()
-	SET(DESIRED_LUA_INCLUDE_DIR ${LUAJIT_INCLUDE_DIR})
-	SET(DESIRED_LUA_LIBRARY ${LUAJIT_LIBRARY})
-ENDIF()
+# Add LuaJIT manually if not found
+set(LUAJIT_INCLUDE_DIR "/ucrt64/include/luajit-2.1")
+set(LUAJIT_LIBRARY "/ucrt64/lib/libluajit-5.1.dll.a")
 
-ADD_LIBRARY(love-imgui
-	MODULE
+if(NOT EXISTS ${LUAJIT_INCLUDE_DIR}/lua.h)
+	message(FATAL_ERROR "LuaJIT header not found at ${LUAJIT_INCLUDE_DIR}")
+endif()
+
+if(NOT EXISTS ${LUAJIT_LIBRARY})
+	message(FATAL_ERROR "LuaJIT library not found at ${LUAJIT_LIBRARY}")
+endif()
+
+message(STATUS "Using LuaJIT headers: ${LUAJIT_INCLUDE_DIR}")
+message(STATUS "Using LuaJIT library: ${LUAJIT_LIBRARY}")
+
+add_library(love-imgui MODULE
 	src/libimgui/imconfig.h
 	src/libimgui/imgui.cpp
 	src/libimgui/imgui.h
@@ -37,17 +40,9 @@ ADD_LIBRARY(love-imgui
 	src/dostring_cache.cpp
 )
 
-TARGET_INCLUDE_DIRECTORIES(love-imgui PUBLIC
-	${DESIRED_LUA_INCLUDE_DIR}
-)
+target_include_directories(love-imgui PRIVATE ${LUAJIT_INCLUDE_DIR})
+target_link_libraries(love-imgui PRIVATE ${LUAJIT_LIBRARY})
 
-IF(WIN32 OR ANDROID OR IOS)
-	TARGET_LINK_LIBRARIES(love-imgui ${DESIRED_LUA_LIBRARY})
-ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-	# TARGET_COMPILE_DEFINITIONS(love-imgui -undefined dynamic_lookup)
-	TARGET_LINK_LIBRARIES(love-imgui ${DESIRED_LUA_LIBRARY})
-ENDIF()
+set_target_properties(love-imgui PROPERTIES PREFIX "" OUTPUT_NAME "imgui")
 
-SET_TARGET_PROPERTIES(love-imgui PROPERTIES PREFIX "" OUTPUT_NAME "imgui")
-
-INSTALL(TARGETS love-imgui LIBRARY DESTINATION .)
+install(TARGETS love-imgui LIBRARY DESTINATION .)
